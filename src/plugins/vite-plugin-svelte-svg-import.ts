@@ -3,10 +3,20 @@ import { compile } from 'svelte/compiler';
 import { optimize } from 'svgo';
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
 import crypto from 'node:crypto';
+import { Component } from 'svelte';
+import { SvelteHTMLElements } from 'svelte/elements';
 
+interface SvgIconProps {
+	strokeWidthScale?: number;
+	color?: string;
+	id?: string;
+	class?: string | string[];
+}
 export interface Config {
 	root: string;
 }
+export type IconComponent = Component<SvelteHTMLElements['svg'] & SvgIconProps>;
+
 type ViteTransformOptions = { ssr?: boolean | undefined } | undefined;
 
 export const svelteSvgImportVite = () => {
