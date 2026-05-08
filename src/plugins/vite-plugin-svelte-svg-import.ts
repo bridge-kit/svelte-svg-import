@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import { compile } from 'svelte/compiler';
-import { optimize } from 'svgo';
+import { optimize, type Config as SvgoConfig } from 'svgo';
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
 import crypto from 'node:crypto';
 import { Component } from 'svelte';
@@ -19,7 +19,7 @@ export type IconComponent = Component<SvelteHTMLElements['svg'] & SvgIconProps>;
 
 type ViteTransformOptions = { ssr?: boolean | undefined } | undefined;
 
-export const svelteSvgImportVite = () => {
+export const svelteSvgImportVite = (config: SvgoConfig = {}) => {
 	const cache = new Map();
 
 	return {
@@ -40,6 +40,7 @@ export const svelteSvgImportVite = () => {
 			if (cachedContent) return { code: cachedContent };
 
 			const { data } = optimize(svg, {
+				...config,
 				path: cleanedId,
 				plugins: [
 					{
@@ -58,7 +59,7 @@ export const svelteSvgImportVite = () => {
 				css: undefined,
 				filename: id,
 				namespace: 'svg',
-				generate: options.ssr ? 'server' : 'client',
+				generate: 'server',
 			});
 			cache.set(key, js.code);
 			return { code: js.code };
