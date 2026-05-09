@@ -10,7 +10,6 @@ interface SvgIconProps {
 	strokeWidthScale?: number;
 	color?: string;
 	id?: string;
-	class?: string | string[];
 }
 export interface Config {
 	root: string;
@@ -59,7 +58,7 @@ export const svelteSvgImportVite = (config: SvgoConfig = {}) => {
 				css: undefined,
 				filename: id,
 				namespace: 'svg',
-				generate: 'server',
+				generate: options.ssr ? 'server' : 'client',
 			});
 			cache.set(key, js.code);
 			return { code: js.code };
