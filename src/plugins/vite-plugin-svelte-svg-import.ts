@@ -42,6 +42,7 @@ export const svelteSvgImportVite = (config: SvgoConfig = {}) => {
 				...config,
 				path: cleanedId,
 				plugins: [
+					...config.plugins,
 					{
 						name: 'preset-default',
 						params: {
