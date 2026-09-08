@@ -1,68 +1,46 @@
-import fs from 'fs/promises';
-import crypto from 'crypto';
 import { compile } from 'svelte/compiler';
-import { optimize, type Config as SvgoConfig } from 'svgo';
+import { readFile } from 'fs/promises';
+import { createHash } from 'node:crypto';
+import type { Plugin } from 'rollup';
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
-import type { Component } from 'svelte';
-import type { SvelteHTMLElements } from 'svelte/elements';
-import type { SvgIconProps } from '../types/index.js';
+import { optimize, type Config as SvgoConfig } from 'svgo';
 
-export interface Config {
-	root: string;
-}
+const QUERY = '?svelte';
 
-export type IconComponent = Component<
-	SvelteHTMLElements['svg'] & SvgIconProps
->;
+type Config = ({ ssr?: boolean | undefined } & SvgoConfig) | undefined;
 
-export interface RollupSvelteSvgImportOptions extends SvgoConfig {
-	ssr?: boolean;
-}
-
-export const svelteSvgImportRollup = (
-	config: RollupSvelteSvgImportOptions = {},
-) => {
+export const svelteSvgImport = (options: Config): Plugin => {
 	const cache = new Map<string, string>();
 
 	return {
-		name: 'rollup-plugin-svelte-svg-import',
+		name: 'svelte-svg-import',
+		async resolveId(source, importer) {
+			if (!source.endsWith(`.svg${QUERY}`)) return null;
 
-		enforce: 'pre' as const,
+			const file = source.slice(0, -QUERY.length);
+			const resolved = await this.resolve(file, importer, { skipSelf: true });
+			if (!resolved) return null;
 
-		async transform(_src: string, id: string) {
-			if (!id.endsWith('.svg?svelte')) return;
+			return `${resolved.id}${QUERY}`;
+		},
+		async load(id) {
+			if (!id.endsWith(`.svg${QUERY}`)) return null;
 
+			return readFile(id.slice(0, -QUERY.length), 'utf8');
+		},
+		async transform(code, id) {
+			if (!id.endsWith(`.svg${QUERY}`)) return null;
 			const cleanedId = id.replace('?svelte', '');
+			const key = createHash('sha256').update(code).digest('hex');
+			const cached = cache.get(key);
+			if (cached) return { code: cached, map: null };
 
-			const svg = await fs.readFile(cleanedId, {
-				encoding: 'utf8',
-			});
-
-			const hashedContent = crypto
-				.createHash('sha256')
-				.update(svg)
-				.digest('hex');
-
-			const key =
-				hashedContent + (config.ssr ? ':ssr' : ':client');
-
-			const cachedContent = cache.get(key);
-
-			if (cachedContent) {
-				return {
-					code: cachedContent,
-					map: null,
-				};
-			}
-
-			const { data } = optimize(svg, {
-				...config,
-
+			const { data } = optimize(code, {
+				...(options??{}),
 				path: cleanedId,
-
 				plugins: [
 					{
-						...config.plugins,
+						...options?.plugins,
 						name: 'preset-default',
 						params: {
 							overrides: {
@@ -73,22 +51,17 @@ export const svelteSvgImportRollup = (
 					},
 				],
 			});
+			const svelteCode = await generateSvgSvelteComponent(data);
 
-			const content = await generateSvgSvelteComponent(data);
-
-			const { js } = compile(content, {
-				css: undefined,
+			const { js } = compile(svelteCode, {
 				filename: id,
 				namespace: 'svg',
-				generate: config.ssr ? 'server' : 'client',
+				generate: options?.ssr ? 'server' : 'client',
+				dev: false,
 			});
 
 			cache.set(key, js.code);
-
-			return {
-				code: js.code,
-				map: null,
-			};
+			return { code: js.code, map: null };
 		},
 	};
 };
