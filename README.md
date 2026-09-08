@@ -34,7 +34,7 @@ In your `vite.config.js` / `vite.config.ts`:
 ```ts
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { svelteSvgImportVite } from 'svelte-svg-import';
+import { svelteSvgImportVite } from 'svelte-svg-import/vite';
 
 export default defineConfig({
 	plugins: [svelte(), svelteSvgImportVite()],

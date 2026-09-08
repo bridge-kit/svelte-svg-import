@@ -16,12 +16,9 @@ export const generateSvgSvelteComponent = async (svgString: string) => {
 		/"#[0-9a-fA-F]{6}"|"#[0-9a-fA-F]{3}"|black|white/g,
 	);
 
-	isMultiColorIcon =
-		allColorResults
-			.map(([color]) => color)
-			.reduce((prev, color) => (prev === color ? color : 'true')) == 'true';
+	isMultiColorIcon = new Set(allColorResults.map(([color]) => color)).size > 1;
 
-	if (isMultiColorIcon) {
+	if (!isMultiColorIcon) {
 		svelteSvgString = svelteSvgString.replace(
 			/"#[0-9a-fA-F]{6}"|"#[0-9a-fA-F]{3}"|black|white/g,
 			'currentColor',

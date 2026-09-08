@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import { compile } from 'svelte/compiler';
 import { optimize, type Config as SvgoConfig } from 'svgo';
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
-import crypto from 'node:crypto';
+import crypto from 'crypto';
 import { Component } from 'svelte';
 import { SvelteHTMLElements } from 'svelte/elements';
 import { SvgIconProps } from '../types/index.js';
@@ -55,7 +55,7 @@ export const svelteSvgImportVite = (config: SvgoConfig = {}) => {
 				css: undefined,
 				filename: id,
 				namespace: 'svg',
-				generate: options.ssr ? 'server' : 'client',
+				generate: options?.ssr ? 'server' : 'client',
 			});
 			cache.set(key, js.code);
 			return { code: js.code };
