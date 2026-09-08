@@ -1,57 +1,45 @@
-import fs from 'node:fs/promises';
-import crypto from 'node:crypto';
+import fs from 'fs/promises';
 import { compile } from 'svelte/compiler';
 import { optimize, type Config as SvgoConfig } from 'svgo';
-import type { Plugin } from 'vite';
-
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
+import crypto from 'node:crypto';
+import { Component } from 'svelte';
+import { SvelteHTMLElements } from 'svelte/elements';
+import { SvgIconProps } from '../types/index.js';
 
-export interface SvelteSvgImportViteOptions {
-	svgo?: SvgoConfig;
+export interface Config {
+	root: string;
 }
+export type IconComponent = Component<SvelteHTMLElements['svg'] & SvgIconProps>;
 
-export const svelteSvgImportVite = (
-	options: SvelteSvgImportViteOptions = {},
-): Plugin => {
-	const cache = new Map<string, string>();
+type ViteTransformOptions = { ssr?: boolean | undefined } | undefined;
 
-	const { svgo: config = {} } = options;
+export const svelteSvgImportVite = (config: SvgoConfig = {}) => {
+	const cache = new Map();
 
 	return {
 		name: 'vite-plugin-svelte-svg-import',
-		enforce: 'pre',
-
-		async transform(_code, id, transformOptions) {
-			if (!id.endsWith('.svg?svelte')) return null;
+		enforce: 'pre' as const,
+		async transform(_src: string, id: string, options: ViteTransformOptions) {
+			if (!id.endsWith('.svg?svelte')) return;
 
 			const cleanedId = id.replace('?svelte', '');
-
-			const svg = await fs.readFile(cleanedId, 'utf8');
-
+			const svg = await fs.readFile(cleanedId, { encoding: 'utf8' });
 			const hashedContent = crypto
 				.createHash('sha256')
 				.update(svg)
 				.digest('hex');
-
-			const ssr = transformOptions?.ssr === true;
-
-			const key = `${hashedContent}:${ssr ? 'ssr' : 'client'}`;
+			const key = hashedContent + (options?.ssr ? ':ssr' : ':client');
 
 			const cachedContent = cache.get(key);
-
-			if (cachedContent) {
-				return {
-					code: cachedContent,
-					map: null,
-				};
-			}
+			if (cachedContent) return { code: cachedContent };
 
 			const { data } = optimize(svg, {
 				...config,
 				path: cleanedId,
 				plugins: [
-					...(config.plugins ?? []),
 					{
+						...config.plugins,
 						name: 'preset-default',
 						params: {
 							overrides: {
@@ -62,22 +50,15 @@ export const svelteSvgImportVite = (
 					},
 				],
 			});
-
 			const content = await generateSvgSvelteComponent(data);
-
 			const { js } = compile(content, {
-				css: 'injected',
-				filename: cleanedId,
+				css: undefined,
+				filename: id,
 				namespace: 'svg',
-				generate: 'server'
+				generate: options.ssr ? 'server' : 'client',
 			});
-
 			cache.set(key, js.code);
-
-			return {
-				code: js.code,
-				map: null,
-			};
+			return { code: js.code };
 		},
 	};
 };
