@@ -1,6 +1,6 @@
 import { compile } from 'svelte/compiler';
 import { readFile } from 'fs/promises';
-import { createHash } from 'node:crypto';
+import { createHash } from 'crypto';
 import type { Plugin } from 'rollup';
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
 import { optimize, type Config as SvgoConfig } from 'svgo';
