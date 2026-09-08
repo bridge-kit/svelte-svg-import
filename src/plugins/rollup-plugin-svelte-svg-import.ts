@@ -8,7 +8,6 @@ import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.
 
 export interface SvelteSvgImportRollupOptions {
 	svgo?: SvgoConfig;
-	ssr?: boolean;
 }
 
 export const svelteSvgImportRollup = (
@@ -16,7 +15,7 @@ export const svelteSvgImportRollup = (
 ): Plugin => {
 	const cache = new Map<string, string>();
 
-	const { svgo: config = {}, ssr = false } = options;
+	const { svgo: config = {} } = options;
 
 	return {
 		name: 'rollup-plugin-svelte-svg-import',
@@ -33,7 +32,7 @@ export const svelteSvgImportRollup = (
 				.update(svg)
 				.digest('hex');
 
-			const key = `${hashedContent}:${ssr ? 'ssr' : 'client'}`;
+			const key = `${hashedContent}`;
 
 			const cachedContent = cache.get(key);
 
@@ -67,7 +66,7 @@ export const svelteSvgImportRollup = (
 				css: 'injected',
 				filename: cleanedId,
 				namespace: 'svg',
-				generate: ssr ? 'server' : 'client',
+				generate: 'server'
 			});
 
 			cache.set(key, js.code);

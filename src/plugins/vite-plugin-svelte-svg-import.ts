@@ -69,7 +69,7 @@ export const svelteSvgImportVite = (
 				css: 'injected',
 				filename: cleanedId,
 				namespace: 'svg',
-				generate: ssr ? 'server' : 'client',
+				generate: 'server'
 			});
 
 			cache.set(key, js.code);
