@@ -1,6 +1,6 @@
 {
 	"name": "svelte-svg-import",
-	"version": "0.3.6",
+	"version": "0.3.7",
 	"description": "Use Svgs as Svelte Component like Butter",
 	"main": "index.js",
 	"scripts": {
@@ -17,6 +17,7 @@
 	"exports": {
 		"./rollup": "./dist/plugins/rollup-plugin-svelte-svg-import.js",
 		"./vite": "./dist/plugins/vite-plugin-svelte-svg-import.js",
+		"./utils": "./dist/plugins/index.js",
 		"./type": "./dist/index.d.ts"
 	},
 	"keywords": [],
