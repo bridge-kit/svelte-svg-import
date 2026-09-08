@@ -1,12 +1,12 @@
-interface SvgIconProps {
-	strokeWidthScale?: number;
-	color?: string;
-	id?: string;
-}
+import type { Component } from 'svelte';
+import type { SvelteHTMLElements } from 'svelte/elements';
+import type { SvgIconProps } from './types/index.js';
+export * from './types/index.ts'
 
 declare module '*.svg?svelte' {
-	import type { SvelteHTMLElements } from 'svelte/elements';
-	import { type Component } from 'svelte';
-	const component: Component<SvelteHTMLElements['svg'] & SvgIconProps>;
+	const component: Component<
+		SvelteHTMLElements['svg'] & SvgIconProps
+	>;
+
 	export default component;
 }

@@ -2,26 +2,26 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import { compile } from 'svelte/compiler';
 import { optimize, type Config as SvgoConfig } from 'svgo';
-import type { Plugin } from 'vite';
+import type { Plugin } from 'rollup';
 
 import { generateSvgSvelteComponent } from '../utils/generateSvgSvelteComponent.js';
 
-export interface SvelteSvgImportViteOptions {
+export interface SvelteSvgImportRollupOptions {
 	svgo?: SvgoConfig;
+	ssr?: boolean;
 }
 
-export const svelteSvgImportVite = (
-	options: SvelteSvgImportViteOptions = {},
+export const svelteSvgImportRollup = (
+	options: SvelteSvgImportRollupOptions = {},
 ): Plugin => {
 	const cache = new Map<string, string>();
 
-	const { svgo: config = {} } = options;
+	const { svgo: config = {}, ssr = false } = options;
 
 	return {
-		name: 'vite-plugin-svelte-svg-import',
-		enforce: 'pre',
+		name: 'rollup-plugin-svelte-svg-import',
 
-		async transform(_code, id, transformOptions) {
+		async transform(_code, id) {
 			if (!id.endsWith('.svg?svelte')) return null;
 
 			const cleanedId = id.replace('?svelte', '');
@@ -32,8 +32,6 @@ export const svelteSvgImportVite = (
 				.createHash('sha256')
 				.update(svg)
 				.digest('hex');
-
-			const ssr = transformOptions?.ssr === true;
 
 			const key = `${hashedContent}:${ssr ? 'ssr' : 'client'}`;
 
